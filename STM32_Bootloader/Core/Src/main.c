@@ -17,11 +17,20 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+/*
+ * STM32F103C6T6 UART Bootloader with OTA Update and Rollback
+ * Modular and clean implementation using HAL (STM32CubeIDE)
+ */
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "flash_if.h"
+#include "uart_if.h"
+#include "crc_if.h"
+#include "gpio_if.h"
+#include "app_jump.h"
+#include "error_handler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +40,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define APP_ADDRESS        0x08004000U  // Main firmware address
+#define BACKUP_ADDRESS     0x0800C000U  // Backup firmware address
+#define OTA_TRIGGER_PIN    GPIO_PIN_0
+#define OTA_TRIGGER_PORT   GPIOA
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -85,7 +97,32 @@ int main(void)
 
   /* Initialize all configured peripherals */
   /* USER CODE BEGIN 2 */
+    if (is_ota_triggered(OTA_TRIGGER_PORT, OTA_TRIGGER_PIN))
+    {
+        uart_send_string("\nOTA Update Requested\n");
 
+        uint8_t firmware[MAX_FW_SIZE];
+        uint32_t fw_len = uart_receive_firmware(firmware);
+
+        if (crc_check_passed(firmware, fw_len))
+        {
+            uart_send_string("CRC Passed. Flashing new firmware...\n");
+
+            backup_current_firmware(APP_ADDRESS, BACKUP_ADDRESS);
+            flash_erase(APP_ADDRESS, fw_len);
+            flash_write(APP_ADDRESS, firmware, fw_len);
+
+            uart_send_string("Firmware updated successfully.\n");
+        }
+        else
+        {
+            uart_send_string("CRC Failed. Launching error handler.\n");
+            error_handler();
+        }
+    }
+
+    uart_send_string("Booting main application...\n");
+    jump_to_application(APP_ADDRESS);
   /* USER CODE END 2 */
 
   /* Infinite loop */
