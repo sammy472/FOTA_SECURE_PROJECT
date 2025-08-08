@@ -1,7 +1,7 @@
 /************************************
  * error_handler.c
  ************************************/
-#include "error_handler.h"
+#include "fota_error_handler.h"
 #include "main.h"
 
 void FOTA_Error_Handler(void)

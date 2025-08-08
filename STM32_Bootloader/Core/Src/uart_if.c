@@ -2,9 +2,9 @@
  * uart_if.c
  ************************************/
 #include "uart_if.h"
-#include "usart.h"
+#include "main.h"
 
-void UART_Send_String(const char *str)
+void UART_Send_String(const char *str, UART_HandleTypeDef* huart1)
 {
     HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
 }

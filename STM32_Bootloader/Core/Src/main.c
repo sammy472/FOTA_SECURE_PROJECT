@@ -17,10 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-/*
- * STM32F103C6T6 UART Bootloader with OTA Update and Rollback
- * Modular and clean implementation using HAL (STM32CubeIDE)
- */
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -30,7 +26,7 @@
 #include "crc_if.h"
 #include "gpio_if.h"
 #include "app_jump.h"
-#include "error_handler.h"
+#include "fota_error_handler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +48,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CRC_HandleTypeDef hcrc;
+
+UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
@@ -59,6 +58,9 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_CRC_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -96,33 +98,36 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_CRC_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-    if (is_ota_triggered(OTA_TRIGGER_PORT, OTA_TRIGGER_PIN))
+    if (Is_OTA_Triggered(OTA_TRIGGER_PORT, OTA_TRIGGER_PIN))
     {
-        uart_send_string("\nOTA Update Requested\n");
+        UART_Send_String("\nOTA Update Requested\n");
 
         uint8_t firmware[MAX_FW_SIZE];
-        uint32_t fw_len = uart_receive_firmware(firmware);
+        uint32_t fw_len = UART_Receive_Firmware(firmware);
 
-        if (crc_check_passed(firmware, fw_len))
+        if (CRC_Check_Passed(firmware, fw_len))
         {
-            uart_send_string("CRC Passed. Flashing new firmware...\n");
+        	UART_Send_String("CRC Passed. Flashing new firmware...\n");
 
-            backup_current_firmware(APP_ADDRESS, BACKUP_ADDRESS);
-            flash_erase(APP_ADDRESS, fw_len);
-            flash_write(APP_ADDRESS, firmware, fw_len);
+            Backup_Current_Firmware(APP_ADDRESS, BACKUP_ADDRESS);
+            Flash_Erase(APP_ADDRESS, fw_len);
+            Flash_Write(APP_ADDRESS, firmware, fw_len);
 
-            uart_send_string("Firmware updated successfully.\n");
+            UART_Send_String("Firmware updated successfully.\n");
         }
         else
         {
-            uart_send_string("CRC Failed. Launching error handler.\n");
-            error_handler();
+        	UART_Send_String("CRC Failed. Launching error handler.\n");
+        	FOTA_Error_Handler();
         }
     }
 
-    uart_send_string("Booting main application...\n");
-    jump_to_application(APP_ADDRESS);
+    UART_Send_String("Booting main application...\n");
+    Jump_To_Application(APP_ADDRESS);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -170,6 +175,100 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief CRC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CRC_Init(void)
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */

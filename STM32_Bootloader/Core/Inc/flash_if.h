@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#define FLASH_PAGE_SIZE     1024U
+#define FOTA_FLASH_PAGE_SIZE     1024U
 #define MAX_FW_SIZE         (48 * 1024U) // 48KB max firmware size
 
 void Flash_Erase(uint32_t start_address, uint32_t length);
