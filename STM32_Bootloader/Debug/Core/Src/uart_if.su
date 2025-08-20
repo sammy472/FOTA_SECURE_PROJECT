@@ -1,0 +1,2 @@
+../Core/Src/uart_if.c:7:6:UART_Send_String	16	static
+../Core/Src/uart_if.c:12:10:UART_Receive_Firmware	24	static

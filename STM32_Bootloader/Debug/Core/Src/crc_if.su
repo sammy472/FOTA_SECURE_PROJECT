@@ -1,0 +1,2 @@
+../Core/Src/crc_if.c:6:10:Calculate_CRC	24	static
+../Core/Src/crc_if.c:11:6:CRC_Check_Passed	32	static

@@ -8,9 +8,8 @@
 #include <stdbool.h>
 #include"main.h"
 
-CRC_HandleTypeDef hcrc;
 
-uint32_t Calculate_CRC(uint8_t *data, uint32_t len);
-bool CRC_Check_Passed(uint8_t *data, uint32_t len);
+uint32_t Calculate_CRC(uint8_t *data, uint32_t len, CRC_HandleTypeDef* hcrc);
+bool CRC_Check_Passed(uint8_t *data, uint32_t len, UART_HandleTypeDef* huart1, CRC_HandleTypeDef* hcrc);
 
 #endif

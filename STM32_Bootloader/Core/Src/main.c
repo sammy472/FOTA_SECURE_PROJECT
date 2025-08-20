@@ -104,29 +104,29 @@ int main(void)
   /* USER CODE BEGIN 2 */
     if (Is_OTA_Triggered(OTA_TRIGGER_PORT, OTA_TRIGGER_PIN))
     {
-        UART_Send_String("\nOTA Update Requested\n");
+        UART_Send_String("\nOTA Update Requested\n", &huart1);
 
         uint8_t firmware[MAX_FW_SIZE];
-        uint32_t fw_len = UART_Receive_Firmware(firmware);
+        uint32_t fw_len = UART_Receive_Firmware(firmware,&huart1);
 
-        if (CRC_Check_Passed(firmware, fw_len))
+        if (CRC_Check_Passed(firmware, fw_len,&huart1, &hcrc))
         {
-        	UART_Send_String("CRC Passed. Flashing new firmware...\n");
+        	UART_Send_String("CRC Passed. Flashing new firmware...\n", &huart1);
 
             Backup_Current_Firmware(APP_ADDRESS, BACKUP_ADDRESS);
             Flash_Erase(APP_ADDRESS, fw_len);
             Flash_Write(APP_ADDRESS, firmware, fw_len);
 
-            UART_Send_String("Firmware updated successfully.\n");
+            UART_Send_String("Firmware updated successfully.\n", &huart1);
         }
         else
         {
-        	UART_Send_String("CRC Failed. Launching error handler.\n");
+        	UART_Send_String("CRC Failed. Launching error handler.\n", &huart1);
         	FOTA_Error_Handler();
         }
     }
 
-    UART_Send_String("Booting main application...\n");
+    UART_Send_String("Booting main application...\n", &huart1);
     Jump_To_Application(APP_ADDRESS);
   /* USER CODE END 2 */
 

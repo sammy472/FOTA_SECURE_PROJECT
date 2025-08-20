@@ -52,6 +52,12 @@ default.size.stdout \
 OBJDUMP_LIST += \
 FOTA_BOOTLOADER.list \
 
+OBJCOPY_HEX += \
+FOTA_BOOTLOADER.hex \
+
+OBJCOPY_BIN += \
+FOTA_BOOTLOADER.bin \
+
 
 # All Target
 all: main-build
@@ -75,12 +81,22 @@ FOTA_BOOTLOADER.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+FOTA_BOOTLOADER.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "FOTA_BOOTLOADER.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
+FOTA_BOOTLOADER.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "FOTA_BOOTLOADER.bin"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) FOTA_BOOTLOADER.elf FOTA_BOOTLOADER.list FOTA_BOOTLOADER.map default.size.stdout
+	-$(RM) FOTA_BOOTLOADER.bin FOTA_BOOTLOADER.elf FOTA_BOOTLOADER.hex FOTA_BOOTLOADER.list FOTA_BOOTLOADER.map default.size.stdout
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX) $(OBJCOPY_BIN)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'
